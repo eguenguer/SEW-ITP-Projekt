@@ -15,11 +15,14 @@ public class Controller implements ActionListener {
     private RegistrationFrame rf;
     private PasswordChangePanel pcp;
     private PasswordChangeFrame pcf;
+    private StartMenuPanel smp;
+    private StartMenuFrame smf;
     private TrainerPanel tp;
     private TrainerFrame tf;
     private EintragHinzufügenPanel ehp;
     private EintragHinzufügenFrame ehf;
-
+    private StatistikPanel stp;
+    private StatistikFrame stf;
     private final MailPwd mailPwd;
     private final WortTrainer wortTrainer;
     private final WortSpeicher wortSpeicher;
@@ -31,7 +34,6 @@ public class Controller implements ActionListener {
         wortSpeicher = new WortSpeicher();
 
         wortTrainer.addEintrag(new TextEintrag("Was bedeutet MVC?", "Model View Controller"));
-        wortTrainer.addEintrag(new TextEintrag("Was ist Java?", "Programmiersprache"));
         wortTrainer.addEintrag(new BildEintrag("https://www.google.at/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png", "Google"));
 
         lp = new LoginPanel(this);
@@ -43,83 +45,53 @@ public class Controller implements ActionListener {
         String ac = e.getActionCommand();
 
         switch (ac) {
-            case "Anmelden":
-                handleLogin();
+            case "Anmelden": handleLogin(); break;
+            case "Konto anlegen": registerWindow(); break;
+            case "register": handleRegistration(); break;
+            case "backToLogin": loginWindow(); break;
+
+            case "startTrainer":
+                if (smf != null) smf.dispose();
+                trainerWindow();
+                break;
+            case "startHangman":
+                JOptionPane.showMessageDialog(smf, "Hangman wird bald implementiert!");
+                break;
+            case "Passwort ändern btn": pwdChangeWindow(); break;
+            case "Abmelden": handleLogout(); break;
+
+            case "Passwort ändern": handlePwdChange(); break;
+            case "Zurück": if (pcf != null) pcf.dispose(); break;
+
+            case "Prüfen": handlePrüfen(); break;
+            case "Nächste Frage": handleNächsteFrage(); break;
+            case "backToMenu":
+                if (tf != null) tf.dispose();
+                startMenuWindow();
                 break;
 
-            case "Konto anlegen":
-                registerWindow();
+            case "statsBackToMenu":
+                if (stf != null) stf.dispose();
+                startMenuWindow();
                 break;
 
-            case "register":
-                handleRegistration();
-                break;
-
-            case "backToLogin":
-                loginWindow();
-                break;
-
-            case "Passwort ändern btn":
-                pwdChangeWindow();
-                break;
-
-            case "Passwort ändern":
-                handlePwdChange();
-                break;
-
-            case "Zurück":
-                pcf.dispose();
-                break;
-
-            case "Abmelden":
-                handleLogout();
-                break;
-
-            case "Prüfen":
-                handlePrüfen();
-                break;
-
-            case "Nächste Frage":
-                handleNächsteFrage();
-                break;
-
-            case "Eintrag hinzufügen":
-                eintragHinzufügenWindow();
-                break;
-
-            case "eintragSpeichern":
-                handleEintragHinzufügen();
-                break;
-
-            case "eintragAbbrechen":
-                ehf.dispose();
-                break;
-
-            case "Speichern":
-                handleSpeichern();
-                break;
-
-            case "Laden":
-                handleLaden();
-                break;
+            case "Eintrag hinzufügen": eintragHinzufügenWindow(); break;
+            case "eintragSpeichern": handleEintragHinzufügen(); break;
+            case "eintragAbbrechen": if (ehf != null) ehf.dispose(); break;
+            case "Speichern": handleSpeichern(); break;
+            case "Laden": handleLaden(); break;
         }
     }
 
     private void handleLogin() {
         String mail = lp.getMail();
         String pwd = lp.getPwd();
-
-        if (mailPwd.getLoginInfo().containsKey(mail)) {
-            if (mailPwd.getLoginInfo().get(mail).equals(pwd)) {
-                lp.successMsg();
-                currentUser = mail;
-                lf.dispose();
-                trainerWindow();
-            } else {
-                lp.wrongPwd();
-            }
+        if (mailPwd.getLoginInfo().containsKey(mail) && mailPwd.getLoginInfo().get(mail).equals(pwd)) {
+            currentUser = mail;
+            lf.dispose();
+            startMenuWindow();
         } else {
-            lp.noUser();
+            lp.wrongPwd();
         }
     }
 
@@ -127,187 +99,121 @@ public class Controller implements ActionListener {
         String mail = rp.getMail();
         String pwd = rp.getPwd();
         String pwdR = rp.getPwdRepeat();
-
-        if (mail.isBlank() || pwd.isBlank() || pwdR.isBlank()) {
-            rp.allFields();
-            return;
-        }
-
-        if (mailPwd.getLoginInfo().containsKey(mail)) {
-            rp.userExists();
-            return;
-        }
-
-        if (!mail.toLowerCase().contains("tgm") || !mail.contains("@")) {
-            rp.invalidMail();
-            return;
-        }
-
-        if (!pwd.equals(pwdR)) {
-            rp.pwdMismatch();
-            return;
-        }
+        if (mail.isBlank() || pwd.isBlank() || pwdR.isBlank()) { rp.allFields(); return; }
+        if (!mail.contains("@") || !mail.toLowerCase().contains("tgm")) { rp.invalidMail(); return; }
+        if (!pwd.equals(pwdR)) { rp.pwdMismatch(); return; }
+        if (mailPwd.getLoginInfo().containsKey(mail)) { rp.userExists(); return; }
 
         mailPwd.addUser(mail, pwd);
         rp.successMsg();
     }
 
     private void handlePwdChange() {
-        String oldPwd = pcp.getOldPwd();
-        String newPwd = pcp.getNewPwd();
-        String confirmPwd = pcp.getConfirmPwd();
+        String oldP = pcp.getOldPwd();
+        String newP = pcp.getNewPwd();
+        String confP = pcp.getConfirmPwd();
+        if (oldP.isBlank() || newP.isBlank()) { pcp.allFields(); return; }
+        if (!mailPwd.getLoginInfo().get(currentUser).equals(oldP)) { pcp.wrongOldPwd(); return; }
+        if (!newP.equals(confP)) { pcp.pwdMismatch(); return; }
 
-        if (oldPwd.isBlank() || newPwd.isBlank() || confirmPwd.isBlank()) {
-            pcp.allFields();
-            return;
-        }
-
-        if (!mailPwd.getLoginInfo().get(currentUser).equals(oldPwd)) {
-            pcp.wrongOldPwd();
-            return;
-        }
-
-        if (oldPwd.equals(newPwd)) {
-            pcp.noChangePwd();
-            return;
-        }
-
-        if (!newPwd.equals(confirmPwd)) {
-            pcp.pwdMismatch();
-            return;
-        }
-
-        mailPwd.changePwd(currentUser, newPwd);
+        mailPwd.changePwd(currentUser, newP);
         pcp.successMsg();
-    }
-
-    private void handleLogout() {
-        currentUser = null;
-        wortTrainer.resetStatistik();
-        tf.dispose();
-        if (pcf != null) pcf.dispose();
-        if (ehf != null) ehf.dispose();
-        lp = new LoginPanel(this);
-        lf = new LoginFrame(lp);
     }
 
     private void handlePrüfen() {
         String eingabe = tp.getAntwortEingabe();
-
         if (eingabe.trim().isEmpty()) {
-            tp.setMessage("Bitte gib eine Antwort ein!", Color.RED);
+            tp.setMessage("Bitte Antwort eingeben!", Color.RED);
             return;
         }
-
         boolean richtig = wortTrainer.prüfen(eingabe);
+        if (richtig) tp.setMessage("Richtig!", Color.GREEN);
+        else tp.setMessage("Falsch! Antwort: " + wortTrainer.getAktuellerEintrag().getAntwort(), Color.RED);
 
-        if (richtig) {
-            tp.setMessage("Richtig!", Color.GREEN);
-        } else {
-            WortEintrag eintrag = wortTrainer.getAktuellerEintrag();
-            tp.setMessage("Falsch! Richtige Antwort: " + eintrag.getAntwort(), Color.RED);
-        }
-
-        int verbleibend = wortTrainer.getAnzahlNochNichtGefragt();
-        tp.setStatistik(wortTrainer.getStatistik() + " | Verbleibend: " + verbleibend);
-
+        updateStatistikLabel();
         tp.enableAntwortEingabe(false);
     }
 
     private void handleNächsteFrage() {
-        if (!wortTrainer.hatEintraege()) {
-            tp.setMessage("Keine Einträge vorhanden! Bitte füge zuerst Einträge hinzu.", Color.RED);
-            tp.setFrage("");
-            return;
-        }
-
+        if (!wortTrainer.hatEintraege()) return;
         if (wortTrainer.alleFragenBeantwortet()) {
-            int gesamt = wortTrainer.getRichtig() + wortTrainer.getFalsch();
-            tp.showEndStatistik(wortTrainer.getRichtig(), wortTrainer.getFalsch(), gesamt);
-            tp.setMessage("Quiz beendet! Lade eine neue Datei um erneut zu starten.", Color.BLUE);
+            if (tf != null) tf.dispose();
+            showStatistikWindow();
             return;
         }
-
-        WortEintrag eintrag = wortTrainer.getNächsterEintrag();
-        tp.setFrage(eintrag.getFrage());
-        tp.clearMessage();
+        WortEintrag e = wortTrainer.getNächsterEintrag();
+        tp.setFrage(e.getFrage());
         tp.clearAntwortEingabe();
+        tp.clearMessage();
         tp.enableAntwortEingabe(true);
-
-        // Zeige verbleibende Fragen an
-        int verbleibend = wortTrainer.getAnzahlNochNichtGefragt();
-        tp.setStatistik(wortTrainer.getStatistik() + " | Verbleibend: " + verbleibend);
+        updateStatistikLabel();
     }
 
     private void handleEintragHinzufügen() {
-        String typ = ehp.getTyp();
-        String frage = ehp.getFrage();
-        String antwort = ehp.getAntwort();
+        String f = ehp.getFrage();
+        String a = ehp.getAntwort();
+        if (f.isBlank() || a.isBlank()) { ehp.setMessage("Fehler: Felder leer!"); return; }
 
-        if (frage.isBlank() || antwort.isBlank()) {
-            ehp.setMessage("Alle Felder müssen ausgefüllt sein!");
-            return;
-        }
+        if (ehp.getTyp().equals("TEXT")) wortTrainer.addEintrag(new TextEintrag(f, a));
+        else wortTrainer.addEintrag(new BildEintrag(f, a));
 
-        try {
-            if (typ.equals("TEXT")) {
-                wortTrainer.addEintrag(new TextEintrag(frage, antwort));
-            } else {
-                wortTrainer.addEintrag(new BildEintrag(frage, antwort));
-            }
-            ehp.setMessage("Eintrag erfolgreich hinzugefügt!");
-            ehp.clearFields();
-        } catch (Exception ex) {
-            ehp.setMessage("Fehler: " + ex.getMessage());
-        }
+        ehp.setMessage("Eintrag gespeichert!");
+        ehp.clearFields();
     }
 
     private void handleSpeichern() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Speichern unter");
-
-        int result = fileChooser.showSaveDialog(tf);
-
-        if (result == JFileChooser.APPROVE_OPTION) {
+        JFileChooser fc = new JFileChooser();
+        if (fc.showSaveDialog(tf) == JFileChooser.APPROVE_OPTION) {
             try {
-                String filepath = fileChooser.getSelectedFile().getAbsolutePath();
-                if (!filepath.endsWith(".txt")) {
-                    filepath += ".txt";
-                }
-                wortSpeicher.speichern(filepath, wortTrainer.getEintraege());
-                JOptionPane.showMessageDialog(tf, "Erfolgreich gespeichert!", "Erfolg", JOptionPane.INFORMATION_MESSAGE);
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(tf, "Fehler beim Speichern: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            }
+                wortSpeicher.speichern(fc.getSelectedFile().getAbsolutePath(), wortTrainer.getEintraege());
+            } catch (IOException ex) { JOptionPane.showMessageDialog(tf, "Fehler!"); }
         }
     }
 
     private void handleLaden() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Datei laden");
-
-        int result = fileChooser.showOpenDialog(tf);
-
-        if (result == JFileChooser.APPROVE_OPTION) {
+        JFileChooser fc = new JFileChooser();
+        if (fc.showOpenDialog(tf) == JFileChooser.APPROVE_OPTION) {
             try {
-                String filepath = fileChooser.getSelectedFile().getAbsolutePath();
-                WortEintrag[] geladen = wortSpeicher.laden(filepath);
+                WortEintrag[] geladen = wortSpeicher.laden(fc.getSelectedFile().getAbsolutePath());
                 wortTrainer.setEintraege(geladen);
                 wortTrainer.resetStatistik();
-                int verbleibend = wortTrainer.getAnzahlNochNichtGefragt();
-                tp.setStatistik(wortTrainer.getStatistik() + " | Verbleibend: " + verbleibend);
-                tp.clearAntwortEingabe();
-                tp.clearMessage();
-                tp.enableAntwortEingabe(true);
-                JOptionPane.showMessageDialog(tf, "Erfolgreich geladen! " + geladen.length + " Einträge.", "Erfolg", JOptionPane.INFORMATION_MESSAGE);
-
-                if (wortTrainer.hatEintraege()) {
-                    handleNächsteFrage();
-                }
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(tf, "Fehler beim Laden: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            }
+                handleNächsteFrage();
+            } catch (IOException ex) { JOptionPane.showMessageDialog(tf, "Fehler!"); }
         }
+    }
+
+    private void handleLogout() {
+        currentUser = null;
+        if (smf != null) smf.dispose();
+        if (tf != null) tf.dispose();
+        if (pcf != null) pcf.dispose();
+        loginWindow();
+    }
+
+    private void updateStatistikLabel() {
+        tp.setStatistik(wortTrainer.getStatistik() + " | Verbleibend: " + wortTrainer.getAnzahlNochNichtGefragt());
+    }
+
+    private void startMenuWindow() {
+        smp = new StartMenuPanel(this);
+        smf = new StartMenuFrame(smp);
+    }
+
+    private void trainerWindow() {
+        tp = new TrainerPanel(currentUser, this);
+        tf = new TrainerFrame(tp);
+        handleNächsteFrage();
+    }
+
+    private void showStatistikWindow() {
+        stp = new StatistikPanel(wortTrainer.getRichtig(), wortTrainer.getFalsch(), this);
+        stf = new StatistikFrame(stp);
+    }
+
+    private void loginWindow() {
+        if (rf != null) rf.dispose();
+        lp = new LoginPanel(this);
+        lf = new LoginFrame(lp);
     }
 
     private void registerWindow() {
@@ -316,24 +222,9 @@ public class Controller implements ActionListener {
         rf = new RegistrationFrame(rp);
     }
 
-    private void loginWindow() {
-        rf.dispose();
-        lp = new LoginPanel(this);
-        lf = new LoginFrame(lp);
-    }
-
     private void pwdChangeWindow() {
         pcp = new PasswordChangePanel(this);
         pcf = new PasswordChangeFrame(pcp);
-    }
-
-    private void trainerWindow() {
-        tp = new TrainerPanel(currentUser, this);
-        tf = new TrainerFrame(tp);
-
-        if (wortTrainer.hatEintraege()) {
-            handleNächsteFrage();
-        }
     }
 
     private void eintragHinzufügenWindow() {
