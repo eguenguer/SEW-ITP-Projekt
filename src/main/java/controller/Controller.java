@@ -215,6 +215,19 @@ public class Controller implements ActionListener {
     }
 
     private void handleNächsteFrage() {
+        if(wortTrainer.getAktuellerEintrag()!= null){
+            String eingabe =tp.getAntwortEingabe();
+            wortTrainer.prüfen(eingabe);
+        }
+
+        if(wortTrainer.alleFragenBeantwortet()){
+            if(tf != null){
+                tf.dispose();
+            }
+            showStatistikWindow();
+            return;
+        }
+
         if (!wortTrainer.hatEintraege()) {
             tp.setMessage("Keine Einträge vorhanden! Bitte füge zuerst Einträge hinzu.", Color.RED);
             tp.setFrage("");
