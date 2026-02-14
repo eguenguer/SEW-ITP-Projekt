@@ -39,8 +39,8 @@ public class Controller implements ActionListener {
         hangmanGame = new HangmanGame();
         hangmanGame.setWortTrainer(wortTrainer);
 
-        wortTrainer.addEintrag(new TextEintrag("Was bedeutet MVC?", "Model View Controller"));
-        wortTrainer.addEintrag(new BildEintrag("https://www.google.at/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png", "Google"));
+        //wortTrainer.addEintrag(new TextEintrag("Was bedeutet MVC?", "Model View Controller"));
+        //wortTrainer.addEintrag(new BildEintrag("https://www.google.at/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png", "Google"));
 
         lp = new LoginPanel(this);
         lf = new LoginFrame(lp);
@@ -149,12 +149,17 @@ public class Controller implements ActionListener {
     private void handleLogin() {
         String mail = lp.getMail();
         String pwd = lp.getPwd();
-        if (mailPwd.getLoginInfo().containsKey(mail) && mailPwd.getLoginInfo().get(mail).equals(pwd)) {
-            currentUser = mail;
-            lf.dispose();
-            startMenuWindow();
+
+        if(mailPwd.getLoginInfo().containsKey(mail)) {
+            if (mailPwd.getLoginInfo().get(mail).equals(pwd)) {
+                currentUser = mail;
+                lf.dispose();
+                startMenuWindow();
+            } else {
+                lp.wrongPwd();
+            }
         } else {
-            lp.wrongPwd();
+            lp.noUser();
         }
     }
 
@@ -162,10 +167,23 @@ public class Controller implements ActionListener {
         String mail = rp.getMail();
         String pwd = rp.getPwd();
         String pwdR = rp.getPwdRepeat();
-        if (mail.isBlank() || pwd.isBlank() || pwdR.isBlank()) { rp.allFields(); return; }
-        if (!mail.contains("@") || !mail.toLowerCase().contains("tgm")) { rp.invalidMail(); return; }
-        if (!pwd.equals(pwdR)) { rp.pwdMismatch(); return; }
-        if (mailPwd.getLoginInfo().containsKey(mail)) { rp.userExists(); return; }
+
+        if (mail.isBlank() || pwd.isBlank() || pwdR.isBlank()) {
+            rp.allFields();
+            return;
+        }
+        if (!mail.contains("@") || !mail.toLowerCase().contains("tgm")) {
+            rp.invalidMail();
+            return;
+        }
+        if (!pwd.equals(pwdR)) {
+            rp.pwdMismatch();
+            return;
+        }
+        if (mailPwd.getLoginInfo().containsKey(mail)) {
+            rp.userExists();
+            return;
+        }
 
         mailPwd.addUser(mail, pwd);
         rp.successMsg();
@@ -175,9 +193,22 @@ public class Controller implements ActionListener {
         String oldP = pcp.getOldPwd();
         String newP = pcp.getNewPwd();
         String confP = pcp.getConfirmPwd();
-        if (oldP.isBlank() || newP.isBlank()) { pcp.allFields(); return; }
-        if (!mailPwd.getLoginInfo().get(currentUser).equals(oldP)) { pcp.wrongOldPwd(); return; }
-        if (!newP.equals(confP)) { pcp.pwdMismatch(); return; }
+
+        if (oldP.isBlank() || newP.isBlank() || confP.isBlank()) {
+            pcp.allFields();
+            return;
+        }
+        if (!mailPwd.getLoginInfo().get(currentUser).equals(oldP)) {
+            pcp.wrongOldPwd();
+            return;
+        }
+        if(oldP.equals(newP)) {
+            pcp.noChangePwd();
+            return;
+        }
+        if (!newP.equals(confP)) {
+            pcp.pwdMismatch(); return;
+        }
 
         mailPwd.changePwd(currentUser, newP);
         pcp.successMsg();

@@ -73,15 +73,6 @@ public class LoginPanel extends JPanel{
         return String.valueOf(userPwd.getPassword());
     }
 
-    public void resetFields(){
-        userMail.setText("");
-        userPwd.setText("");
-    }
-
-    public void successMsg(){
-        messageLabel.setText("Login erfolgreich");
-    }
-
     public void wrongPwd(){
         messageLabel.setText("Falsches Passwort");
     }

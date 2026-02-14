@@ -87,13 +87,6 @@ public class RegistrationPanel extends JPanel{
         return String.valueOf(userPwdRepeat.getPassword());
     }
 
-    public void resetFields(){
-        userMail.setText("");
-        userPwd.setText("");
-        userPwdRepeat.setText("");
-        messageLabel.setText("");
-    }
-
     public void successMsg(){
         messageLabel.setText("Registrierung erfolgreich");
     }
