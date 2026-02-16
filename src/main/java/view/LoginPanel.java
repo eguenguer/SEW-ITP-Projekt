@@ -5,14 +5,14 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 
 public class LoginPanel extends JPanel{
-    JButton loginButton = new JButton("Anmelden");
-    JButton resetButton = new JButton("Konto anlegen");
-    JTextField userMail = new JTextField();
-    JPasswordField userPwd = new JPasswordField();
-    JLabel titelLabel = new JLabel("ITP-Fachbegriffstrainer Anmeldung");
-    JLabel userMailLabel = new JLabel("TGM-E-Mail:");
-    JLabel userPwdLabel = new JLabel("Passwort:");
-    JLabel messageLabel = new JLabel();
+    private JButton loginButton = new JButton("Anmelden");
+    private JButton resetButton = new JButton("Konto anlegen");
+    private JTextField userMail = new JTextField();
+    private JPasswordField userPwd = new JPasswordField();
+    private JLabel titelLabel = new JLabel("ITP-Fachbegriffstrainer Anmeldung");
+    private JLabel userMailLabel = new JLabel("TGM-E-Mail:");
+    private JLabel userPwdLabel = new JLabel("Passwort:");
+    private JLabel messageLabel = new JLabel();
 
     public LoginPanel(ActionListener controller){
         this.setLayout(new GridBagLayout());
