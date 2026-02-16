@@ -25,7 +25,7 @@ public class WortTrainer {
 
     public void addEintrag(WortEintrag eintrag) {
         if (anzahlEintraege >= eintraege.length) {
-            int neueGroesse = eintraege.length * 2;
+            int neueGroesse = eintraege.length == 0 ? 1 : eintraege.length * 2; // speicheroptimierter als +1
             WortEintrag[] neuesArray = new WortEintrag[neueGroesse];
             int[] neueIndizes = new int[neueGroesse];
 
@@ -53,10 +53,12 @@ public class WortTrainer {
     }
 
     public void setEintraege(WortEintrag[] eintraege) {
-        this.eintraege = eintraege;
+        //this.eintraege = eintraege;
+        this.eintraege = eintraege.length == 0 ? new WortEintrag[1]: eintraege; // leere Vokabellisten berücksichtigen (in length 0 vliste eintrag --> error --> mit 1 standardplatz wenn legth 0 dann funktionierts
         this.anzahlEintraege = eintraege.length;
         // Index-Array neu dimensionieren
-        this.nochNichtGefragt = new int[anzahlEintraege];
+        //this.nochNichtGefragt = new int[anzahlEintraege];
+        this.nochNichtGefragt = new int[eintraege.length == 0 ? 1 : eintraege.length];
         resetFragenListe();
     }
 

@@ -5,7 +5,7 @@ import java.io.*;
 public class WortSpeicher {
 
     public void speichern(String dateiname, WortEintrag[] liste) throws IOException {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(dateiname))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(dateiname + ".txt"))) {
             for (WortEintrag e : liste) {
                 if (e != null) {
                     writer.write(e.getTyp() + ";" + e.getFrage() + ";" + e.getAntwort());

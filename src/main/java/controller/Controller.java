@@ -25,12 +25,16 @@ public class Controller implements ActionListener {
     private StatistikFrame stf;
     private HangmanPanel hp;
     private HangmanFrame hf;
+    private VokabelListePanel vp;
+    private VokabelListeFrame vf;
 
     private final MailPwd mailPwd;
     private final WortTrainer wortTrainer;
     private final WortSpeicher wortSpeicher;
     private final HangmanGame hangmanGame;
     private String currentUser;
+    private boolean vListeGeladen = false;
+    private boolean schonGeprueft = false;
 
     public Controller() {
         mailPwd = new MailPwd();
@@ -68,13 +72,32 @@ public class Controller implements ActionListener {
                 break;
 
             case "startTrainer":
-                if (smf != null) smf.dispose();
-                trainerWindow();
+                handleStartTrainer();
                 break;
 
             case "startHangman":
-                if (smf != null) smf.dispose();
-                hangmanWindow();
+                handleStartHangman();
+                break;
+
+            case "Vokabelliste":
+                vListeEditWindow();
+                break;
+
+            case "vokabelliste laden":
+                handlevListeLaden();
+                break;
+
+            case "vokabelliste speichern":
+                handlevListeSpeichern();
+                break;
+
+            case "vokabelliste Eintrag hinzufügen":
+                eintragHinzufügenWindow();
+                break;
+
+            case "vokabelliste zurück":
+                if(vf != null) vf.dispose();
+                startMenuWindow();
                 break;
 
             case "Passwort ändern btn":
@@ -104,16 +127,13 @@ public class Controller implements ActionListener {
             case "backToMenu":
                 if (tf != null) tf.dispose();
                 if (hf != null) hf.dispose();
+                if (pcf != null) pcf.dispose();
                 startMenuWindow();
                 break;
 
-            case "statsBackToMenu":
+            case "statsBackToMenu": // nicht hier geschlossen bzw. warum geht es nicht, wird es hier nicht auch schon gschlossen
                 if (stf != null) stf.dispose();
                 startMenuWindow();
-                break;
-
-            case "Eintrag hinzufügen":
-                eintragHinzufügenWindow();
                 break;
 
             case "eintragSpeichern":
@@ -124,15 +144,15 @@ public class Controller implements ActionListener {
                 if (ehf != null) ehf.dispose();
                 break;
 
-            case "Speichern":
+            case "Speichern": // nötig?
                 handleSpeichern();
                 break;
 
-            case "Laden":
+            case "Laden": // nötig?
                 handleLaden();
                 break;
 
-            case "hangman spielen":
+            case "hangman spielen": // nötig?
                 hangmanWindow();
                 break;
 
@@ -142,6 +162,14 @@ public class Controller implements ActionListener {
 
             case "neuesSpiel":
                 startNeuesHangmanSpiel();
+                break;
+
+            case "vokabelliste Eintrag bearbeiten":
+                handleEintragBearbeiten();
+                break;
+
+            case "vokabelliste Eintrag löschen":
+                handleEintragLöschen();
                 break;
         }
     }
@@ -214,6 +242,72 @@ public class Controller implements ActionListener {
         pcp.successMsg();
     }
 
+    private void handleStartTrainer() {
+        if(!vListeGeladen) {
+            JOptionPane.showMessageDialog(smf, "Bitte zuerst eine Vokabelliste im Menü, unter Vokabelliste, laden.", "Keine Vokabelliste", JOptionPane.WARNING_MESSAGE); // Label von Vokabelliste bearbeiten zu nur Vokabelliste ändern?
+            return;
+        }
+        if(!wortTrainer.hatEintraege()) {
+            JOptionPane.showMessageDialog(smf, "Bitte zuerst Einträge zur Vokabelliste im Menü, unter Vokabelliste, hinzufügen.", "Keine Vokabelliste", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if(smf != null) smf.dispose();
+        //if(stf != null) stf.dispose();
+        trainerWindow();
+    }
+
+    private void handleStartHangman() {
+        if(!vListeGeladen) {
+            JOptionPane.showMessageDialog(smf, "Bitte zuerst eine Vokabelliste im Menü, unter Vokabelliste, laden.", "Keine Vokabelliste", JOptionPane.WARNING_MESSAGE); // Label von Vokabelliste bearbeiten zu nur Vokabelliste ändern?
+            return;
+        }
+        if(!wortTrainer.hatEintraege()) {
+            JOptionPane.showMessageDialog(smf, "Bitte zuerst Einträge zur Vokabelliste im Menü, unter Vokabelliste, hinzufügen.", "Keine Vokabelliste", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (smf != null) smf.dispose();
+        hangmanWindow();
+    }
+
+    private void handlevListeLaden() {
+        JFileChooser fc = new JFileChooser();
+        if(fc.showOpenDialog(vf) == JFileChooser.APPROVE_OPTION){
+            try{
+                WortEintrag[] geladen = wortSpeicher.laden(fc.getSelectedFile().getAbsolutePath());
+                wortTrainer.setEintraege(geladen);
+                wortTrainer.resetStatistik();
+                vListeGeladen = true;
+                vp.setListeGeladen(true, geladen.length);
+
+                if(geladen.length == 0) { // Was, wenn keine Einträge hinzugefügt und Spiel starten drücken? Rein laden raus rein Vliste noch da?
+                    JOptionPane.showMessageDialog(vf, "Die Liste enthält keine Einträge!\nBitte fügen Sie welche hinzu!", "Leere Liste", JOptionPane.WARNING_MESSAGE);
+                }
+                vp.updateEintraegeAnzeige(geladen);
+            }catch(IOException e){
+                JOptionPane.showMessageDialog(vf, "Fehler beim Laden der Datei!", "Fehler Datei", JOptionPane.ERROR_MESSAGE);
+                vListeGeladen = false;
+                vp.setListeGeladen(false, 0);
+            }
+        }
+    }
+
+    private void handlevListeSpeichern() {
+        if(!vListeGeladen) {
+            JOptionPane.showMessageDialog(vf, "Keine Vokabelliste geladen!", "Keine Vokabelliste", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JFileChooser fc = new JFileChooser();
+        if(fc.showSaveDialog(vf) == JFileChooser.APPROVE_OPTION) {
+            try{
+                wortSpeicher.speichern(fc.getSelectedFile().getAbsolutePath(), wortTrainer.getEintraege());
+                JOptionPane.showMessageDialog(vf, "Vokabelliste wurde erfolgreich gespeichert!", "Datei speichern", JOptionPane.INFORMATION_MESSAGE);
+            }catch(IOException e) {
+                JOptionPane.showMessageDialog(vf, "Fehler beim Speichern!", "Fehler Datei", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
     private void handlePrüfen() {
         String eingabe = tp.getAntwortEingabe();
         if (eingabe.trim().isEmpty()) {
@@ -226,13 +320,19 @@ public class Controller implements ActionListener {
 
         updateStatistikLabel();
         tp.enableAntwortEingabe(false);
+        schonGeprueft = true;
     }
 
     private void handleNächsteFrage() {
-        if(wortTrainer.getAktuellerEintrag()!= null){
-            String eingabe =tp.getAntwortEingabe();
-            wortTrainer.prüfen(eingabe);
+        if(!schonGeprueft && wortTrainer.getAktuellerEintrag() != null) {
+            String eingabe = tp.getAntwortEingabe();
+            if(!eingabe.trim().isEmpty()) {
+                wortTrainer.prüfen(eingabe);
+                updateStatistikLabel();
+            }
         }
+
+        schonGeprueft = false; // zurücksetzen
 
         if(wortTrainer.alleFragenBeantwortet()){
             if(tf != null){
@@ -266,6 +366,12 @@ public class Controller implements ActionListener {
 
         ehp.setMessage("Eintrag gespeichert!");
         ehp.clearFields();
+
+        // Anzahl an Einträgen aktualisieren
+        if(vp != null && vListeGeladen) {
+            vp.setListeGeladen(true, wortTrainer.getEintraege().length);
+            vp.updateEintraegeAnzeige(wortTrainer.getEintraege());
+        }
     }
 
     private void handleSpeichern() {
@@ -291,9 +397,13 @@ public class Controller implements ActionListener {
 
     private void handleLogout() {
         currentUser = null;
+        vListeGeladen = false;
+        schonGeprueft = false; // sicherheitshalber
+        // notwendig, weil ja sowieso geschlossen?
         if (smf != null) smf.dispose();
         if (tf != null) tf.dispose();
         if (pcf != null) pcf.dispose();
+        if (vf != null) vf.dispose();
         loginWindow();
     }
 
@@ -357,13 +467,20 @@ public class Controller implements ActionListener {
     }
 
     private void startMenuWindow() {
-        smp = new StartMenuPanel(this);
+        smp = new StartMenuPanel(currentUser, this);
         smf = new StartMenuFrame(smp);
     }
 
     private void trainerWindow() {
-        tp = new TrainerPanel(currentUser, this);
+        tp = new TrainerPanel(this);
         tf = new TrainerFrame(tp);
+        startNeuenTrainer();
+    }
+
+    private void startNeuenTrainer() {
+        wortTrainer.resetStatistik();
+        wortTrainer.setEintraege(wortTrainer.getEintraege());
+        schonGeprueft = false;
         handleNächsteFrage();
     }
 
@@ -379,12 +496,13 @@ public class Controller implements ActionListener {
     }
 
     private void registerWindow() {
-        lf.dispose();
+        if(lf != null) lf.dispose();
         rp = new RegistrationPanel(this);
         rf = new RegistrationFrame(rp);
     }
 
     private void pwdChangeWindow() {
+        if(smf != null) smf.dispose();
         pcp = new PasswordChangePanel(this);
         pcf = new PasswordChangeFrame(pcp);
     }
@@ -398,6 +516,70 @@ public class Controller implements ActionListener {
         hp = new HangmanPanel(this);
         hf = new HangmanFrame(hp);
         startNeuesHangmanSpiel();
+    }
+
+    private void vListeEditWindow() {
+        if(smf != null) smf.dispose();
+        vp = new VokabelListePanel(this);
+        vf = new VokabelListeFrame(vp);
+
+        if(vListeGeladen) vp.setListeGeladen(true, wortTrainer.getEintraege().length);
+    }
+
+    private void handleEintragBearbeiten() {
+        int index = vp.getSelectedIndex();
+        if (index < 0) return;
+
+        WortEintrag[] eintraege = wortTrainer.getEintraege();
+        WortEintrag eintrag = eintraege[index];
+
+        // Dialog mit aktuellen Werten
+        String neueFrage = JOptionPane.showInputDialog(vf, "Frage:", eintrag.getFrage());
+        if (neueFrage == null || neueFrage.isBlank()) return;
+
+        String neueAntwort = JOptionPane.showInputDialog(vf, "Antwort:", eintrag.getAntwort());
+        if (neueAntwort == null || neueAntwort.isBlank()) return;
+
+        // Eintrag aktualisieren
+        if (eintrag instanceof TextEintrag) {
+            eintraege[index] = new TextEintrag(neueFrage, neueAntwort);
+        } else {
+            eintraege[index] = new BildEintrag(neueFrage, neueAntwort);
+        }
+
+        wortTrainer.setEintraege(eintraege);
+        vp.updateEintraegeAnzeige(eintraege);
+        vp.setListeGeladen(true, eintraege.length);
+    }
+
+    private void handleEintragLöschen() {
+        int index = vp.getSelectedIndex();
+        if (index < 0) return;
+
+        int confirm = JOptionPane.showConfirmDialog(
+                vf,
+                "Möchten Sie diesen Eintrag wirklich löschen?",
+                "Eintrag löschen",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirm != JOptionPane.YES_OPTION) return;
+
+        WortEintrag[] alte = wortTrainer.getEintraege();
+        WortEintrag[] neue = new WortEintrag[alte.length - 1];
+
+        // Alle außer den gelöschten kopieren
+        int neuerIndex = 0;
+        for (int i = 0; i < alte.length; i++) {
+            if (i != index) {
+                neue[neuerIndex++] = alte[i];
+            }
+        }
+
+        wortTrainer.setEintraege(neue);
+        vp.updateEintraegeAnzeige(neue);
+        vp.setListeGeladen(true, neue.length);
+        vp.clearSelection();
     }
 
     public static void main(String[] args) {
