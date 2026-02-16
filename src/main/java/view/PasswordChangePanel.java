@@ -57,6 +57,7 @@ public class PasswordChangePanel extends JPanel{
         gbc.gridx = 0;
         this.add(backButton, gbc);
         backButton.addActionListener(controller);
+        backButton.setActionCommand("backToMenu");
         backButton.setFocusable(false);
 
         gbc.gridx = 1;

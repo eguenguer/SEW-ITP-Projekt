@@ -8,7 +8,7 @@ public class StartMenuFrame extends JFrame {
         super("Startmenü");
         this.add(content);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.setSize(400, 350);
+        this.setSize(380, 370);
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setVisible(true);

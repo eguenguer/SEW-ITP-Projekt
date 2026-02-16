@@ -18,29 +18,29 @@ public class HangmanGame {
         this.wort = zufallsWort().toLowerCase();
         this.erratenesWort = "";
         for(int i = 0; i < wort.length(); i++) {
-            if(wort.charAt(i) == ' '){
-                erratenesWort += " ";
-            }else {
+            char c = wort.charAt(i);
+            if(Character.isLetter(c)){
                 erratenesWort += "_";
+            }else {
+                erratenesWort += c;
             }
         }
         this.falscheBuchstaben = "";
         this.aktuelleVersuche = 0;
 
-        int anzLeerzeichen = 0;
+        int anzBuchstaben = 0;
         for(int i = 0; i < wort.length(); i++){
-            if(wort.charAt(i) == ' '){
-                anzLeerzeichen++;
+            if(Character.isLetter(wort.charAt(i))){
+                anzBuchstaben++;
             }
         }
 
-        int tatsWLaenge = wort.length() - anzLeerzeichen;
         if(niveau == 1) {
-            maxVersuche = tatsWLaenge + 10;
+            maxVersuche = anzBuchstaben + 10;
         } else if(niveau == 2) {
-            maxVersuche = tatsWLaenge + 5;
+            maxVersuche = anzBuchstaben + 5;
         } else {
-            maxVersuche = tatsWLaenge;
+            maxVersuche = anzBuchstaben;
         }
     }
 
